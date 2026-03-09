@@ -542,7 +542,7 @@ Vrei mai multe detalii despre vreunul?"""
         response = f"🎁 Îți pot oferi o reducere specială de {discount}% pentru {service} dacă începem săptămâna asta! Te interesează?"
         new_context['last_offer'] = {'service': service, 'discount': discount}
     
-    elif any(word in user_message for word in ['da', da']):
+    elif any(word in user_message for word in ['da', 'da']):
         if context.get('last_offer'):
             response = f"Perfect! Ți-am aplicat reducerea de {context['last_offer']['discount']}%. Vrei să programăm o discuție pentru a stabili detaliile?"
         else:
