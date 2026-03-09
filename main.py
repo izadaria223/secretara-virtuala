@@ -4,10 +4,10 @@ import random
 import json
 
 app = Flask(__name__)
-CORS(app)  # Permite conexiuni de pe site-ul tău
+CORS(app)  # Permite conexiuni de pe orice site
 
 # ============================================
-# BAZA DE DATE - SERVICII ȘI PREȚURI (din site-ul tău)
+# BAZA DE DATE - SERVICII ȘI PREȚURI
 # ============================================
 
 SERVICES = {
@@ -88,6 +88,8 @@ CHAT_WIDGET = """
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         .daria-chat-widget {
             position: fixed;
@@ -233,6 +235,7 @@ CHAT_WIDGET = """
             gap: 8px;
             padding: 10px 15px;
             background: white;
+            border-top: 1px solid #eee;
         }
         
         .daria-suggestion {
@@ -380,15 +383,16 @@ CHAT_WIDGET = """
             if (!message || message.trim() === '') return;
             
             const input = document.getElementById('dariaInput');
+            const userMessage = message;
             input.value = '';
             
-            addMessage(message, false);
+            addMessage(userMessage, false);
             showTyping();
             
             fetch('/daria/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: message, context: conversationContext})
+                body: JSON.stringify({message: userMessage, context: conversationContext})
             })
             .then(response => response.json())
             .then(data => {
@@ -399,6 +403,11 @@ CHAT_WIDGET = """
                 if (data.offer) {
                     showOffer(data.offer);
                 }
+            })
+            .catch(error => {
+                removeTyping();
+                addMessage('Îmi pare rău, am o problemă tehnică. Te rog să încerci mai târziu.');
+                console.error('Error:', error);
             });
         }
         
@@ -452,11 +461,11 @@ def daria_chat():
     discount = random.randint(10, 30)
     
     # Logica de conversație
-    if any(word in user_message for word in ['bună', 'salut', 'hey', 'hello']):
+    if any(word in user_message for word in ['bună', 'salut', 'hey', 'hello', 'buna']):
         response = "Bună! Eu sunt Daria, secretara virtuală. Cu ce serviciu pot să te ajut?"
         new_context['step'] = 'greeting'
     
-    elif any(word in user_message for word in ['servicii', 'ce faceți', 'ce oferiți']):
+    elif any(word in user_message for word in ['servicii', 'ce faceți', 'ce oferiți', 'servicii']):
         response = """Avem o gamă variată de servicii:
 🔹 **Site-uri Web** - Prezentare (€499), Magazine online (€1999), Site-uri piese auto (€999)
 🔹 **Aplicații Mobile** - iOS, Android, Hibride (€499 - €9800)
@@ -464,7 +473,7 @@ def daria_chat():
 
 Ce anume te interesează?"""
     
-    elif any(word in user_message for word in ['site auto', 'piese auto']):
+    elif any(word in user_message for word in ['site auto', 'piese auto', 'auto']):
         response = """Pentru site-uri piese auto avem:
 🚗 **STAR WEBSITE** - €999
    • Catalog de bază
@@ -483,7 +492,7 @@ Ce anume te interesează?"""
 
 Vrei mai multe detalii despre vreunul?"""
     
-    elif any(word in user_message for word in ['magazin online', 'e-commerce']):
+    elif any(word in user_message for word in ['magazin online', 'e-commerce', 'magazin']):
         response = """Pentru magazine online avem:
 🛒 **STARTER SHOP** - €550
    • 20 produse
@@ -500,7 +509,7 @@ Vrei mai multe detalii despre vreunul?"""
    • Module extra
    • Suport prioritar"""
     
-    elif any(word in user_message for word in ['aplicații', 'app', 'mobile']):
+    elif any(word in user_message for word in ['aplicații', 'app', 'mobile', 'aplicatii']):
         response = """Dezvoltăm aplicații mobile:
 📱 **APLICAȚIE START** - €499
    • iOS sau Android
@@ -528,16 +537,16 @@ Vrei mai multe detalii despre vreunul?"""
    • 10 cuvinte cheie
    • Raport lunar"""
     
-    elif any(word in user_message for word in ['preț', 'pret', 'cost', 'cât']):
+    elif any(word in user_message for word in ['preț', 'pret', 'cost', 'cât', 'cat']):
         response = "Pentru ce serviciu dorești prețul? Pot să-ți dau detalii despre site-uri, aplicații sau pachete SEO."
     
-    elif any(word in user_message for word in ['contact', 'telefon', 'email']):
+    elif any(word in user_message for word in ['contact', 'telefon', 'email', 'adresa']):
         response = """Ne poți contacta:
 📞 Telefon: +40 721 234 567
 📧 Email: office@hakunadesign.ro
 📍 Adresă: Strada Alexandru Ioan Cuza nr. 45, Sector 1, București"""
     
-    elif any(word in user_message for word in ['ofertă', 'reducere', 'specială']):
+    elif any(word in user_message for word in ['ofertă', 'reducere', 'specială', 'oferta']):
         service = random.choice(['site-uri auto', 'magazine online', 'aplicații mobile'])
         response = f"🎁 Îți pot oferi o reducere specială de {discount}% pentru {service} dacă începem săptămâna asta! Te interesează?"
         new_context['last_offer'] = {'service': service, 'discount': discount}
@@ -548,7 +557,7 @@ Vrei mai multe detalii despre vreunul?"""
         else:
             response = "Super! Ce anume ți-ar plăcea să discutăm?"
     
-    elif any(word in user_message for word in ['program', 'discuție', 'întâlnire']):
+    elif any(word in user_message for word in ['program', 'discuție', 'întâlnire', 'programare']):
         response = "Cu plăcere! Te așteptăm mâine la ora 10:00 pentru o cafea virtuală. Îți voi trimite un email cu link-ul de meet. ☕️"
     
     else:
@@ -566,7 +575,7 @@ def health():
 
 @app.route('/')
 def home():
-    return "Daria - Secretara Virtuală este online! Accesează /daria pentru widget."
+    return "Daria - Secretara Virtuală este online! Accesează <a href='/daria'>/daria</a> pentru widget."
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
